@@ -16,6 +16,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }, request) => {
+      console.log(request); // A supprimmer
       await sendVerificationEmail({ user, url, token });
     }
   },

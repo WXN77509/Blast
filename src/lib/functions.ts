@@ -48,6 +48,8 @@ export async function sendVerificationEmail({
     }
   } catch (err) {
     console.error("Unexpected error sending verification email:", err);
+  } finally {
+    console.log(token); // A supprimmer
   }
 }
 
