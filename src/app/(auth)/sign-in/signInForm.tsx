@@ -24,13 +24,45 @@ export function SignInForm() {
     try {
       const res = await authClient.signIn.social({
         provider,
-        callbackURL: "/",
+        callbackURL: "/api/auth/callback", // <-- page client dédiée au callback OAuth
         disableRedirect: true
       });
 
-      if ("url" in res && typeof res.url === "string") {
-        window.open(res.url, "_blank", "width=500,height=600");
+      if (res.data && typeof res.data.url === "string") {
+        const popup = window.open(
+          res.data.url,
+          "_blank",
+          "width=500,height=600"
+        );
+
+        if (!popup) {
+          toast.error("Popup blocked by browser.");
+          return;
+        }
+
+        // Ecoute un message envoyé par la popup (via postMessage)
+        const messageHandler = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return; // sécurité
+          if (event.data?.type === "oauth_success") {
+            popup.close();
+            window.removeEventListener("message", messageHandler);
+            window.location.href = "/";
+          }
+        };
+
+        window.addEventListener("message", messageHandler);
+
+        // En complément, si l’utilisateur ferme la popup sans finir
+        const timer = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(timer);
+            window.removeEventListener("message", messageHandler);
+            // Optionnel : tu peux aussi forcer une action ici
+            window.location.href = "/";
+          }
+        }, 500);
       } else {
+        console.error("Unexpected response:", res);
         toast.error("No redirection links received.");
       }
     } catch (error) {

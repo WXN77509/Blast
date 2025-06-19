@@ -3,7 +3,7 @@
 import { Grip, Search, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { ModeToggle } from "./theme-toggle";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Tooltip,
   TooltipProvider,
@@ -27,6 +27,9 @@ import {
 } from "./ui/dropdown-menu";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
+import { useAuth } from "@/components/AuthContext";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 const items = [
   {
@@ -69,6 +72,32 @@ const items = [
 export function Navbar() {
   const [focusInput, setFocusInput] = useState(false);
   const [hoverInput, setHoverInput] = useState(false);
+  const router = useRouter();
+
+  const { user, isGuest } = useAuth();
+  useEffect(() => {
+    const guestUserId = localStorage.getItem("guestUserId");
+
+    if (user && !isGuest && guestUserId) {
+      fetch("/api/merge-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guestUserId })
+      }).then(() => {
+        localStorage.removeItem("guestUserId");
+      });
+    }
+  }, [user, isGuest]);
+
+  const signOutUser = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/sign-in");
+        }
+      }
+    });
+  };
 
   return (
     <nav className="fixed top-0 z-20 w-full flex flex-row justify-between items-center max-md:gap-1 px-4 py-1.5 bg-card text-card-foreground">
@@ -78,7 +107,11 @@ export function Navbar() {
           To Do
         </Link>
       </div>
-      <div className="w-[120px] relative text-center md:w-[400px] max-md:p-1 max-md:rounded-sm">
+      <div
+        className={
+          "w-[120px] relative text-center md:w-[400px] max-md:p-1 max-md:rounded-sm"
+        }
+      >
         <input
           onMouseEnter={() => setHoverInput(true)}
           onMouseLeave={() => setHoverInput(false)}
@@ -121,66 +154,6 @@ export function Navbar() {
       </div>
 
       <div className="flex flex-row items-center max-[430px]:gap-2 gap-4">
-        <div className="rounded-full p-0.5 transition-all focus:bg-muted focus:shadow-sm  focus:scale-105 hover:bg-muted hover:shadow-sm  hover:scale-105">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Avatar>
-                <AvatarImage src="" alt="@" />
-                <AvatarFallback className="text-sm">cn</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="start">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  Profile
-                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Billing
-                  <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Settings
-                  <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Keyboard shortcuts
-                  <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>Team</DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem>Email</DropdownMenuItem>
-                      <DropdownMenuItem>Message</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>More...</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuItem>
-                  New Team
-                  <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>GitHub</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuItem disabled>API</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Log out
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
         <div className="rounded-full p-1.5 transition-all focus:bg-muted focus:shadow-sm  focus:scale-105 hover:bg-muted hover:shadow-sm hover:scale-110">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -188,8 +161,8 @@ export function Navbar() {
                 <Settings className="text-muted-foreground" />
               </span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-96" align="start">
-              <DropdownMenuLabel>Settings</DropdownMenuLabel>
+            <DropdownMenuContent align="start">
+              <DropdownMenuLabel className="mt-4">Settings</DropdownMenuLabel>
               <DropdownMenuGroup className="flex flex-col gap-4 my-4">
                 {items.map((value, index) => (
                   <DropdownMenuItem key={index}>
@@ -235,7 +208,7 @@ export function Navbar() {
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuItem disabled>API</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => signOutUser()}>
                 Log out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
               </DropdownMenuItem>
@@ -244,6 +217,75 @@ export function Navbar() {
         </div>
 
         <ModeToggle />
+
+        <div className="rounded-full p-0.5 transition-all focus:bg-muted focus:shadow-sm  focus:scale-105 hover:bg-muted hover:shadow-sm  hover:scale-105">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar>
+                <AvatarImage src={user?.image || undefined} alt="@" />
+                <AvatarFallback className="text-sm">
+                  {`${user?.name.split(" ")[0][0]}${user?.name.split(" ")[1][0]}`}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  {user?.name}
+                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  {user?.email}
+                  <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  Settings
+                  <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  Keyboard shortcuts
+                  <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem>Team</DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem>Email</DropdownMenuItem>
+                      <DropdownMenuItem>Message</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>More...</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuItem>
+                  New Team
+                  <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <a
+                  href=""
+                  className="font-bold text-primary underline-offset-4 hover:underline"
+                >
+                  GitHub
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem disabled>API</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOutUser()}>
+                Log out
+                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </nav>
   );

@@ -3,44 +3,91 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
-  ReactNode,
-  Dispatch,
-  SetStateAction
+  ReactNode
 } from "react";
+import { useSession } from "@/lib/auth-client";
+import type { Session, User } from "better-auth";
 
-interface ToggleContextType {
-  whatToggleIsVisible: number;
-  setWhatToggleIsVisible: Dispatch<SetStateAction<number>>;
-  toggleAction: () => void;
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  isGuest: boolean;
+  isLoading: boolean;
 }
 
-// Nom du contexte avec majuscule
-const ToggleContext = createContext<ToggleContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Le Provider React commence par une majuscule
-export function ToggleProvider({ children }: { children: ReactNode }) {
-  const [whatToggleIsVisible, setWhatToggleIsVisible] = useState(0);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const { data, isPending } = useSession();
+  const [guestUser, setGuestUser] = useState<User | null>(null);
+  const [isLoadingGuest, setIsLoadingGuest] = useState(false);
 
-  const toggleAction = (): void => {
-    if (whatToggleIsVisible === 1) setWhatToggleIsVisible(0);
-    else setWhatToggleIsVisible(1);
-  };
+  const session = data?.session ?? null;
+  const loggedUser = data?.user ?? null;
+
+  useEffect(() => {
+    async function loadGuestUser() {
+      setIsLoadingGuest(true);
+
+      try {
+        const guestUserId = localStorage.getItem("guestUserId");
+
+        if (guestUserId) {
+          const res = await fetch(`/api/guest/${guestUserId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setGuestUser(data.user);
+            return;
+          } else {
+            localStorage.removeItem("guestUserId");
+          }
+        }
+
+        const createRes = await fetch("/api/guest", { method: "POST" });
+        const created = await createRes.json();
+        localStorage.setItem("guestUserId", created.guestUserId);
+
+        const guestFetch = await fetch(`/api/guest/${created.guestUserId}`);
+        const guest = await guestFetch.json();
+        setGuestUser(guest.user);
+      } catch (err) {
+        console.error("Error loading guest user:", err);
+      } finally {
+        setIsLoadingGuest(false);
+      }
+    }
+
+    if (!loggedUser) {
+      loadGuestUser();
+    } else {
+      localStorage.removeItem("guestUserId");
+      setGuestUser(null);
+    }
+  }, [loggedUser]);
+
+  const user = loggedUser || guestUser;
+  const isGuest = !loggedUser && !!guestUser;
 
   return (
-    <ToggleContext.Provider
-      value={{ whatToggleIsVisible, setWhatToggleIsVisible, toggleAction }}
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        isGuest,
+        isLoading: isPending || isLoadingGuest
+      }}
     >
       {children}
-    </ToggleContext.Provider>
+    </AuthContext.Provider>
   );
 }
 
-// Hook personnalisé commence par "use"
-export function useToggle() {
-  const context = useContext(ToggleContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useToggle must be used within a ToggleProvider");
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
