@@ -1,10 +1,5 @@
-import { ModeToggle } from "@/components/theme-toggle";
+import { ClientHome } from "./clienHome";
 
 export default function Home() {
-  return (
-    <div className="h-full w-full">
-      <h1>Hello, World!</h1>
-      <ModeToggle />
-    </div>
-  );
+  return <ClientHome />;
 }

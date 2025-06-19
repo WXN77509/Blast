@@ -13,6 +13,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Setting {
+  id         String    @id @default(cuid())
+  title      String
+  state      String
+  shortCut   String
+}
+
 model TaskList {
   id      String   @id @default(cuid())
   name    String
@@ -47,16 +54,17 @@ model Task {
 }
 
 model User {
-  id String @id @default(cuid())
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  taskLists     TaskList[] 
+  id             String      @id @default(cuid())
+  name           String?
+  email          String?
+  emailVerified  Boolean
+  image          String?
+  isGuest        Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  sessions       Session[]
+  accounts       Account[]
+  taskLists      TaskList[] 
 
   @@unique([email])
   @@map("user")
@@ -74,7 +82,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
-  @@map("session")
+  @@map("session") 
 }
 
 model Account {
@@ -89,9 +97,8 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("account")
 }

@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Navbar } from "@/components/navbar";
+import { LayoutSidebar } from "@/components/LayoutSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +47,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="flex flex-col pt-12">
+            <Navbar />
+            <Separator />
+            <SidebarProvider>
+              <div className="flex flex-row">
+                <LayoutSidebar />
+                <main>{children}</main>
+              </div>
+            </SidebarProvider>
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>
