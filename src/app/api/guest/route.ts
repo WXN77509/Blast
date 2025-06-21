@@ -1,7 +1,6 @@
 // /app/api/guest/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import guestUserIcon from "@/icons/user-plus.svg";
 
 export async function POST() {
   try {
@@ -9,7 +8,7 @@ export async function POST() {
       data: {
         isGuest: true,
         name: "Guest",
-        image: guestUserIcon,
+        email: "guestUser@guestUser.com",
         emailVerified: false
       }
     });

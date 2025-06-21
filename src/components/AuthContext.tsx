@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   isGuest: boolean;
   isLoading: boolean;
+  isReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,10 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const session = data?.session ?? null;
   const loggedUser = data?.user ?? null;
 
+  const isReady =
+    !isPending &&
+    !isLoadingGuest &&
+    (loggedUser !== null ||
+      guestUser !== null ||
+      (loggedUser === null && guestUser === null));
+
   useEffect(() => {
     async function loadGuestUser() {
       setIsLoadingGuest(true);
-
       try {
         const guestUserId = localStorage.getItem("guestUserId");
 
@@ -47,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const createRes = await fetch("/api/guest", { method: "POST" });
         const created = await createRes.json();
+        console.log("Created new guest user:", created.guestUserId);
         localStorage.setItem("guestUserId", created.guestUserId);
 
         const guestFetch = await fetch(`/api/guest/${created.guestUserId}`);
@@ -76,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         user,
         isGuest,
-        isLoading: isPending || isLoadingGuest
+        isLoading: isPending || isLoadingGuest,
+        isReady
       }}
     >
       {children}

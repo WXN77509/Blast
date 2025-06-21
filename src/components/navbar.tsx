@@ -1,9 +1,9 @@
 "use client";
 
-import { Grip, Search, Settings, X } from "lucide-react";
+import { Grip, Search, Settings, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { ModeToggle } from "./theme-toggle";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Tooltip,
   TooltipProvider,
@@ -31,72 +31,75 @@ import { useAuth } from "@/components/AuthContext";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
-const items = [
-  {
-    title: "Request confirmation before deleting",
-    state: "Desactivated",
-    shortCut: "⇧⌘P"
-  },
-  {
-    title: "Add new tasks at the top",
-    state: "Activated",
-    shortCut: "⌘+B"
-  },
-  {
-    title: "Move starred tasks upwards",
-    state: "Activated",
-    shortCut: "⌘A"
-  },
-  {
-    title: "Read the audible completion alert",
-    state: "Activated",
-    shortCut: "⇧⌘C"
-  },
-  {
-    title: "Display contextual menus",
-    state: "Activated",
-    shortCut: "⌘X"
-  },
-  {
-    title: "Activate reminder notifications",
-    state: "Activated",
-    shortCut: "⌘+L"
-  },
-  {
-    title: "Activate reminder notifications",
-    state: "Desactivated",
-    shortCut: "⇧⌘V"
-  }
-];
-
 export function Navbar() {
   const [focusInput, setFocusInput] = useState(false);
   const [hoverInput, setHoverInput] = useState(false);
+  const [settings, setSettings] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
-
   const { user, isGuest } = useAuth();
-  useEffect(() => {
-    const guestUserId = localStorage.getItem("guestUserId");
 
-    if (user && !isGuest && guestUserId) {
-      fetch("/api/merge-guest", {
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/settings/${user?.id}`);
+      const json = await res.json();
+      if (res.ok) {
+        setSettings(json.userSettings);
+        setError(null);
+      } else {
+        setError(json.error || "Recovery error");
+      }
+    } catch {
+      setError("Network error");
+    }
+  }, [user?.id]);
+
+  async function createSettings(newSettings: any[]) {
+    try {
+      const res = await fetch(`/api/settings/${user?.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestUserId })
-      }).then(() => {
-        localStorage.removeItem("guestUserId");
+        body: JSON.stringify(newSettings)
       });
+      const json = await res.json();
+      if (res.ok) {
+        console.log("Settings created:", json.createdCount);
+        fetchSettings();
+      } else {
+        setError(json.error || "Error during creation");
+      }
+    } catch {
+      setError("Network error");
     }
-  }, [user, isGuest]);
+  }
+
+  async function updateSetting(settingId: string, data: any) {
+    try {
+      const res = await fetch(`/api/settings/${user?.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settingId, data })
+      });
+      const json = await res.json();
+      if (res.ok) {
+        console.log("Setting updated");
+        fetchSettings();
+      } else {
+        setError(json.error || "Update error");
+      }
+    } catch {
+      setError("Network error");
+    }
+  }
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const signOutUser = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/sign-in");
-        }
-      }
-    });
+    await authClient.signOut();
+    router.push("/sign-in");
   };
 
   return (
@@ -162,56 +165,60 @@ export function Navbar() {
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuLabel className="mt-4">Settings</DropdownMenuLabel>
-              <DropdownMenuGroup className="flex flex-col gap-4 my-4">
-                {items.map((value, index) => (
-                  <DropdownMenuItem key={index}>
-                    <div className="flex flex-col items-start gap-2">
-                      {value.title}
-                      <span className="inline-flex gap-4">
-                        <Switch id="airplane-mode" />
-                        <Label
-                          htmlFor="airplane-mode"
-                          className="text-muted-foreground"
-                        >
-                          {value.state}
-                        </Label>
-                      </span>
-                    </div>
-                    <DropdownMenuShortcut>
-                      {value.shortCut}
-                    </DropdownMenuShortcut>
+              <DropdownMenuLabel>Settings</DropdownMenuLabel>
+              <DropdownMenuGroup className="flex flex-col gap-4 mb-4 mt-2">
+                {[...settings]
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map((value, index) => (
+                    <DropdownMenuItem key={index}>
+                      <div className="flex flex-col items-start gap-2">
+                        {value.title}
+                        <span className="inline-flex gap-4">
+                          <Switch
+                            id={`setting-${value.id}`}
+                            checked={value.state === "Activated"}
+                            onCheckedChange={(checked) =>
+                              updateSetting(value.id, {
+                                state: checked ? "Activated" : "Desactivated"
+                              })
+                            }
+                          />
+                          <Label
+                            htmlFor={`setting-${value.id}`}
+                            className="text-muted-foreground font-medium"
+                          >
+                            {value.title}
+                          </Label>
+                        </span>
+                      </div>
+                      <DropdownMenuShortcut>
+                        {value.shortCut}
+                      </DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuGroup>
+              {isGuest ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOutUser()}>
+                    <Link
+                      href=""
+                      className="font-bold text-primary underline-offset-4 hover:underline"
+                    >
+                      Sign in
+                    </Link>
+                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>Team</DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem>Email</DropdownMenuItem>
-                      <DropdownMenuItem>Message</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>More...</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuItem>
-                  New Team
-                  <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>GitHub</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuItem disabled>API</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOutUser()}>
-                Log out
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-              </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOutUser()}>
+                    Log out
+                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -222,10 +229,13 @@ export function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar>
-                <AvatarImage src={user?.image || undefined} alt="@" />
-                <AvatarFallback className="text-sm">
-                  {`${user?.name.split(" ")[0][0]}${user?.name.split(" ")[1][0]}`}
-                </AvatarFallback>
+                {user?.image ? (
+                  <AvatarImage src={user.image} alt="user avatar" />
+                ) : (
+                  <AvatarFallback>
+                    <UserPlus size={21} />
+                  </AvatarFallback>
+                )}
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="start">

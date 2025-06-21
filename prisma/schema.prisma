@@ -14,13 +14,13 @@ datasource db {
 }
 
 model Setting {
-  id         String    @id @default(cuid())
-  title      String
-  state      String
-  shortCut   String
+  id       String   @id @default(cuid())
+  title    String
+  state    String
+  shortCut String
 
-  userId     String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String?
+  user     User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TaskList {
