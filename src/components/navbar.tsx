@@ -7,9 +7,9 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Tooltip,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
+  TooltipContent
 } from "@/components/ui/tooltip";
-import { TooltipContent } from "./ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -30,19 +30,20 @@ import { Switch } from "./ui/switch";
 import { useAuth } from "@/components/AuthContext";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { Setting } from "@prisma/client";
 
 export function Navbar() {
   const [focusInput, setFocusInput] = useState(false);
-  const [hoverInput, setHoverInput] = useState(false);
-  const [settings, setSettings] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<Setting[]>([]);
+  const [, setError] = useState<string | null>(null);
 
   const router = useRouter();
   const { user, isGuest } = useAuth();
 
   const fetchSettings = useCallback(async () => {
+    if (!user?.id) return;
     try {
-      const res = await fetch(`/api/settings/${user?.id}`);
+      const res = await fetch(`/api/settings/${user.id}`);
       const json = await res.json();
       if (res.ok) {
         setSettings(json.userSettings);
@@ -55,9 +56,10 @@ export function Navbar() {
     }
   }, [user?.id]);
 
-  async function createSettings(newSettings: any[]) {
+  /*async function createSettings(newSettings: Setting[]) {
+    if (!user?.id) return;
     try {
-      const res = await fetch(`/api/settings/${user?.id}`, {
+      const res = await fetch(`/api/settings/${user.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSettings)
@@ -72,11 +74,12 @@ export function Navbar() {
     } catch {
       setError("Network error");
     }
-  }
+  }*/
 
-  async function updateSetting(settingId: string, data: any) {
+  async function updateSetting(settingId: string, data: Partial<Setting>) {
+    if (!user?.id) return;
     try {
-      const res = await fetch(`/api/settings/${user?.id}`, {
+      const res = await fetch(`/api/settings/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settingId, data })
@@ -94,8 +97,10 @@ export function Navbar() {
   }
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (user?.id) {
+      fetchSettings();
+    }
+  }, [fetchSettings, user?.id]);
 
   const signOutUser = async () => {
     await authClient.signOut();
@@ -110,33 +115,18 @@ export function Navbar() {
           To Do
         </Link>
       </div>
-      <div
-        className={
-          "w-[120px] relative text-center md:w-[400px] max-md:p-1 max-md:rounded-sm"
-        }
-      >
+
+      <div className="w-[120px] relative text-center md:w-[400px] max-md:p-1 max-md:rounded-sm">
         <input
-          onMouseEnter={() => setHoverInput(true)}
-          onMouseLeave={() => setHoverInput(false)}
           onFocus={() => setFocusInput(true)}
           onBlur={() => setFocusInput(false)}
           placeholder={focusInput ? "Research" : undefined}
-          className={
-            "w-full h-full text-sm rounded-sm px-8 md:pl-10 py-1.5 outline-none cursor-pointer focus:cursor-auto bg-input text-black dark:text-white " +
-            (hoverInput ? "hover:py-2 " : " ")
-          }
+          className="w-full h-full text-sm rounded-sm px-8 md:pl-10 py-1.5 outline-none cursor-pointer focus:cursor-auto bg-input text-black dark:text-white"
         />
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span
-                className={
-                  "absolute left-2.5 cursor-pointer " +
-                  (hoverInput
-                    ? "max-md:top-[0.55rem] top-2"
-                    : "max-md:top-[0.55rem] top-1.5")
-                }
-              >
+              <span className="absolute top-[5px] left-2.5 cursor-pointer">
                 <Search size={20} className="rotate-90" />
               </span>
             </TooltipTrigger>
@@ -146,14 +136,7 @@ export function Navbar() {
           </Tooltip>
         </TooltipProvider>
 
-        <X
-          size={20}
-          className={
-            "absolute right-2.5 " +
-            (focusInput ? " " : "hidden ") +
-            (hoverInput ? "top-[0.55rem]" : "top-1.5")
-          }
-        />
+        {focusInput && <X size={20} className="absolute right-2.5 top-[5px]" />}
       </div>
 
       <div className="flex flex-row items-center max-[430px]:gap-2 gap-4">
@@ -169,8 +152,8 @@ export function Navbar() {
               <DropdownMenuGroup className="flex flex-col gap-4 mb-4 mt-2">
                 {[...settings]
                   .sort((a, b) => a.title.localeCompare(b.title))
-                  .map((value, index) => (
-                    <DropdownMenuItem key={index}>
+                  .map((value) => (
+                    <DropdownMenuItem key={value.id}>
                       <div className="flex flex-col items-start gap-2">
                         {value.title}
                         <span className="inline-flex gap-4">
@@ -197,27 +180,20 @@ export function Navbar() {
                     </DropdownMenuItem>
                   ))}
               </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
               {isGuest ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOutUser()}>
-                    <Link
-                      href=""
-                      className="font-bold text-primary underline-offset-4 hover:underline"
-                    >
-                      Sign in
-                    </Link>
+                <Link href="/sign-in">
+                  <DropdownMenuItem className="font-bold text-primary underline-offset-4 hover:underline">
+                    Sign in
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
-                </>
+                </Link>
               ) : (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOutUser()}>
-                    Log out
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </>
+                <DropdownMenuItem onClick={signOutUser}>
+                  Log out
+                  <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -280,8 +256,10 @@ export function Navbar() {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <a
-                  href=""
+                  href="https://github.com"
                   className="font-bold text-primary underline-offset-4 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   GitHub
                 </a>
@@ -289,7 +267,7 @@ export function Navbar() {
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuItem disabled>API</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOutUser()}>
+              <DropdownMenuItem onClick={signOutUser}>
                 Log out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
               </DropdownMenuItem>

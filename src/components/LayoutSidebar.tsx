@@ -19,16 +19,18 @@ import {
   SquarePlus
 } from "lucide-react";
 import { Separator } from "./ui/separator";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
 
-// Menu items.
 const items = [
   {
     title: "My day",
-    url: "#",
+    url: "/",
     icon: Sun
   },
   {
-    title: "Star",
+    title: "Important",
     url: "#",
     icon: Star
   },
@@ -50,6 +52,8 @@ const items = [
 ];
 
 export function LayoutSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar className="pt-12">
       <SidebarHeader>
@@ -62,10 +66,17 @@ export function LayoutSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link
+                      href={item.url}
+                      className={clsx(
+                        pathname === item.url
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

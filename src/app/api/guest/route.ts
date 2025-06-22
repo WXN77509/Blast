@@ -2,16 +2,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 
+let countGuest = 0;
+
 export async function POST() {
   try {
     const guestUser = await prisma.user.create({
       data: {
         isGuest: true,
         name: "Guest",
-        email: "guestUser@guestUser.com",
+        email: `guest${countGuest}@guestUser.com`,
         emailVerified: false
       }
     });
+
+    countGuest += 1;
 
     return NextResponse.json({ guestUserId: guestUser.id });
   } catch (error) {

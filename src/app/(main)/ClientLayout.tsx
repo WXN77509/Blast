@@ -30,9 +30,9 @@ function LayoutContent({ children }: { children: ReactNode }) {
         <Navbar />
         <Separator />
         <SidebarProvider>
-          <div className="flex flex-row">
+          <div className="flex flex-row flex-1 w-full">
             <LayoutSidebar />
-            <main>{children}</main>
+            <main className="flex-1">{children}</main>
           </div>
         </SidebarProvider>
       </div>

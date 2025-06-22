@@ -59,7 +59,6 @@ export async function GET(
     });
 
     if (userSettings.length === 0) {
-      // Créer les paramètres par défaut
       await prisma.setting.createMany({
         data: items.map((setting) => ({
           ...setting,
