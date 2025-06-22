@@ -218,11 +218,11 @@ export function Navbar() {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuGroup>
                 <DropdownMenuItem>
-                  {user?.name}
+                  {user?.name ?? "Guest"}
                   <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  {user?.email}
+                  {user?.email ?? "guest@guest.com"}
                   <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
