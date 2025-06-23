@@ -126,7 +126,7 @@ export function Navbar() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="absolute top-[5px] left-2.5 cursor-pointer">
+              <span className="absolute top-2.25 md:top-[5px] left-2.5 cursor-pointer">
                 <Search size={20} className="rotate-90" />
               </span>
             </TooltipTrigger>
@@ -136,7 +136,9 @@ export function Navbar() {
           </Tooltip>
         </TooltipProvider>
 
-        {focusInput && <X size={20} className="absolute right-2.5 top-[5px]" />}
+        {focusInput && (
+          <X size={20} className="absolute right-2.5 top-2.25 md:top-[5px]" />
+        )}
       </div>
 
       <div className="flex flex-row items-center max-[430px]:gap-2 gap-4">

@@ -5,7 +5,6 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthContext";
 import clsx from "clsx";
-import { convertDate } from "@/lib/functions";
 import {
   AlignLeft,
   ArrowUpDown,
@@ -14,11 +13,8 @@ import {
   Circle,
   Ellipsis,
   LayoutGrid,
-  Lightbulb,
-  PanelLeft,
   Plus,
-  RefreshCcw,
-  Sun
+  RefreshCcw
 } from "lucide-react";
 import {
   Tooltip,
@@ -28,8 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
-export function ClientHome() {
-  const date = new Date();
+export function ClientPlanned() {
   const { open, openMobile, isMobile } = useSidebar();
   const isSidebarOpen = open || openMobile;
 
@@ -40,7 +35,7 @@ export function ClientHome() {
   const [listType, setListType] = useState<"grid" | "list">("list");
 
   return (
-    <div className="relative flex flex-col items-center gap-1 h-full w-full p-4 md:p-6">
+    <div className="relative flex flex-col items-center gap-6 h-full w-full p-4 md:p-6">
       <div
         className={clsx(
           "w-full flex flex-row justify-between items-center text-[14px]"
@@ -53,10 +48,10 @@ export function ClientHome() {
           {isMobile && !shouldRenderTrigger && (
             <SidebarTrigger className="!p-0" ref={triggerRef} />
           )}
-          {!isMobile && !shouldRenderTrigger && <Sun size={21} />}
+          {!isMobile && !shouldRenderTrigger && <CalendarDays size={21} />}
 
           <span className="flex flex-col font-semibold text-[16px] sm:text-[20px]">
-            {isMobile ? "M..." : "My Day"}
+            {isMobile ? "Pla..." : "Planned"}
           </span>
           <TooltipProvider>
             <Tooltip>
@@ -107,82 +102,60 @@ export function ClientHome() {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex flex-row items-center gap-2 sm:gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="cursor-pointer mr-2 sm:mr-4 inline-flex items-center gap-2">
-                  <ArrowUpDown size={18} /> {isMobile ? "" : "Sort"}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Sort</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="mr-2 sm:mr-4 inline-flex items-center gap-2">
-                  <PanelLeft size={18} /> {isMobile ? "" : "Group"}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Group</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="inline-flex items-center gap-2">
-                  <Lightbulb size={18} /> {isMobile ? "" : "Suggestions"}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Suggestions</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <span className="cursor-pointer mr-2 sm:mr-4 inline-flex items-center gap-2">
+                <ArrowUpDown size={18} /> {isMobile ? "" : "Sort"}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Sort</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
-      <span className="w-full font-semi-bold text-sm">{convertDate(date)}</span>
-      <div
-        className="w-full flex flex-col mt-4 rounded-sm shadow-sm bg-card"
-        onBlur={() => setFocusInput(false)}
-      >
-        <div className="relative flex flex-col w-full px-12 py-4 rounded-sm">
-          <input
-            placeholder="Add a task"
-            className="outline-none text-sm"
-            onFocus={() => setFocusInput(true)}
-          />
-          {focusInput ? (
-            <Circle
-              className="absolute left-4 top-4.5"
-              size={18}
-              color="#2564cf"
+      <div className="w-full flex flex-col gap-2">
+        <div
+          className="w-full flex flex-col rounded-sm shadow-sm bg-card"
+          onBlur={() => setFocusInput(false)}
+        >
+          <div className="relative flex flex-col w-full px-12 py-4 rounded-sm">
+            <input
+              placeholder="Add a task"
+              className="outline-none text-sm"
+              onFocus={() => setFocusInput(true)}
             />
-          ) : (
-            <Plus
-              className="absolute left-4 top-4.25"
-              size={20}
-              color="#2564cf"
-            />
+            {focusInput ? (
+              <Circle
+                className="absolute left-4 top-4.5"
+                size={18}
+                color="#2564cf"
+              />
+            ) : (
+              <Plus
+                className="absolute left-4 top-4.25"
+                size={20}
+                color="#2564cf"
+              />
+            )}
+          </div>
+          {focusInput && (
+            <>
+              <Separator />
+              <div className="flex flex-row justify-between px-4 py-2.5 rounded-sm bg-[#faf9f8] dark:bg-card">
+                <div className="flex flex-row items-center gap-4">
+                  <CalendarDays size={18} color="#2564cf" />
+                  <Bell size={18} color="#2564cf" />
+                  <RefreshCcw size={18} color="#2564cf" />
+                </div>
+                <button className="text-sm bg-white dark:bg-input p-1 border border-[#e1dfdd] dark:border-none px-2 text-muted-foreground">
+                  Add
+                </button>
+              </div>
+            </>
           )}
         </div>
-        {focusInput && (
-          <>
-            <Separator />
-            <div className="flex flex-row justify-between px-4 py-2.5 rounded-sm bg-[#faf9f8] dark:bg-card">
-              <div className="flex flex-row items-center gap-4">
-                <CalendarDays size={18} color="#2564cf" />
-                <Bell size={18} color="#2564cf" />
-                <RefreshCcw size={18} color="#2564cf" />
-              </div>
-              <button className="text-sm bg-white dark:bg-input p-1 border border-[#e1dfdd] dark:border-none px-2 text-muted-foreground">
-                Add
-              </button>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

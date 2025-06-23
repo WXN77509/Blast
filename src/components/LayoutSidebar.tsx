@@ -31,22 +31,22 @@ const items = [
   },
   {
     title: "Important",
-    url: "#",
+    url: "/important",
     icon: Star
   },
   {
     title: "Planned",
-    url: "#",
+    url: "/planned",
     icon: Calendar
   },
   {
     title: "Assigned to me",
-    url: "#",
+    url: "/assigned-to-me",
     icon: User
   },
   {
     title: "Tasks",
-    url: "#",
+    url: "/tasks",
     icon: Home
   }
 ];

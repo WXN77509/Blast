@@ -5,7 +5,6 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthContext";
 import clsx from "clsx";
-import { convertDate } from "@/lib/functions";
 import {
   AlignLeft,
   ArrowUpDown,
@@ -13,12 +12,11 @@ import {
   CalendarDays,
   Circle,
   Ellipsis,
+  Home,
   LayoutGrid,
-  Lightbulb,
   PanelLeft,
   Plus,
-  RefreshCcw,
-  Sun
+  RefreshCcw
 } from "lucide-react";
 import {
   Tooltip,
@@ -28,8 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
-export function ClientHome() {
-  const date = new Date();
+export function ClientTasks() {
   const { open, openMobile, isMobile } = useSidebar();
   const isSidebarOpen = open || openMobile;
 
@@ -42,22 +39,18 @@ export function ClientHome() {
   return (
     <div className="relative flex flex-col items-center gap-1 h-full w-full p-4 md:p-6">
       <div
-        className={clsx(
-          "w-full flex flex-row justify-between items-center text-[14px]"
-        )}
+        className={clsx("w-full flex flex-row justify-between items-center")}
       >
-        <div className="flex flex-row items-center gap-2 sm:gap-3">
+        <div className="flex flex-row items-center gap-3">
           {shouldRenderTrigger && (
             <SidebarTrigger className="!p-0" ref={triggerRef} />
           )}
           {isMobile && !shouldRenderTrigger && (
             <SidebarTrigger className="!p-0" ref={triggerRef} />
           )}
-          {!isMobile && !shouldRenderTrigger && <Sun size={21} />}
+          {!isMobile && !shouldRenderTrigger && <Home size={21} />}
 
-          <span className="flex flex-col font-semibold text-[16px] sm:text-[20px]">
-            {isMobile ? "M..." : "My Day"}
-          </span>
+          <span className="flex flex-col font-semibold text-[20px]">Tasks</span>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -129,21 +122,9 @@ export function ClientHome() {
               <TooltipContent>Group</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="inline-flex items-center gap-2">
-                  <Lightbulb size={18} /> {isMobile ? "" : "Suggestions"}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Suggestions</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
-      <span className="w-full font-semi-bold text-sm">{convertDate(date)}</span>
       <div
         className="w-full flex flex-col mt-4 rounded-sm shadow-sm bg-card"
         onBlur={() => setFocusInput(false)}

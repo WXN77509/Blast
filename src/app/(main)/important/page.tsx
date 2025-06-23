@@ -1,3 +1,5 @@
+import { ClientImportant } from "./clientImportant";
+
 export default function Page() {
-  return "Important Page";
+  return <ClientImportant />;
 }
